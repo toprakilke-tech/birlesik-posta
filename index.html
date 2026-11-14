@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Birleşik Posta</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10141d;color:#fff;font-family:Arial}
+header{padding:22px;background:#191f2b;font-size:24px;font-weight:bold}
+.tabs{display:flex;background:#191f2b}
+.tabs button{flex:1;padding:16px;border:0;background:none;color:#aaa;font-size:16px}
+.tabs button.active{color:#58a6ff;border-bottom:3px solid #58a6ff}
+h3{padding:15px;margin:0}
+.mail{margin:10px;padding:17px;background:#202938;border-radius:13px}
+.mail strong{font-size:16px}
+.mail p{color:#b9c2d0;margin:8px 0 0}
+.mail small{color:#8493a8}
+</style>
+</head>
+<body>
+<header>✉ Birleşik Posta</header>
+<div class="tabs">
+<button class="active" onclick="sekme(this)">Gmail</button>
+<button onclick="sekme(this)">Outlook</button>
+</div>
+<h3>Gelen Kutusu</h3>
+<div id="liste">
+<div class="mail"><strong>Hoş geldiniz</strong><p>Birleşik Posta uygulamasına hoş geldiniz.</p><small>Bugün</small></div>
+</div>
+<script>
+function sekme(btn){
+document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+}
+</script>
+</body>
+</html>
