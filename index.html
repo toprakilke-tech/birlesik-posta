@@ -7,33 +7,83 @@
 <title>Birleşik Posta</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#10141d;color:#fff;font-family:Arial}
-header{padding:22px;background:#191f2b;font-size:24px;font-weight:bold}
+body{margin:0;background:#10141d;color:white;font-family:Arial}
+header{padding:22px;background:#191f2b;font-size:23px;font-weight:bold}
 .tabs{display:flex;background:#191f2b}
-.tabs button{flex:1;padding:16px;border:0;background:none;color:#aaa;font-size:16px}
+.tabs button{flex:1;padding:17px;border:0;background:none;color:#aaa;font-size:16px}
 .tabs button.active{color:#58a6ff;border-bottom:3px solid #58a6ff}
-h3{padding:15px;margin:0}
-.mail{margin:10px;padding:17px;background:#202938;border-radius:13px}
+.top{padding:18px;font-size:19px;font-weight:bold}
+.mail{margin:10px;padding:17px;background:#202938;border-radius:13px;touch-action:pan-y;position:relative;transition:.2s}
 .mail strong{font-size:16px}
-.mail p{color:#b9c2d0;margin:8px 0 0}
-.mail small{color:#8493a8}
+.mail p{color:#c0c8d5;margin:9px 0}
+.mail small{color:#8c9aaf}
+.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:12px}
+.actions button{border:0;border-radius:8px;padding:8px 12px;color:white;background:#34445b}
+.actions .del{background:#a63e49}
+#notice{text-align:center;color:#65c9a5;padding:12px}
 </style>
 </head>
 <body>
 <header>✉ Birleşik Posta</header>
 <div class="tabs">
-<button class="active" onclick="sekme(this)">Gmail</button>
-<button onclick="sekme(this)">Outlook</button>
+<button class="active" onclick="sekme(this,'Tümü')">Tümü</button>
+<button onclick="sekme(this,'Gmail')">Gmail</button>
+<button onclick="sekme(this,'Outlook')">Outlook</button>
 </div>
-<h3>Gelen Kutusu</h3>
-<div id="liste">
-<div class="mail"><strong>Hoş geldiniz</strong><p>Birleşik Posta uygulamasına hoş geldiniz.</p><small>Bugün</small></div>
-</div>
+<div class="top">Gelen Kutusu</div>
+<div id="notice">Sağa kaydır: Arşiv · Sola kaydır: Sil</div>
+<div id="liste"></div>
 <script>
-function sekme(btn){
-document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
-btn.classList.add('active');
+let mailler=[
+{id:1,from:"Ahmet Yılmaz",subject:"Merhaba",body:"Nasılsın? Görüşmeyeli uzun zaman oldu.",date:"Bugün",account:"Gmail"},
+{id:2,from:"Microsoft",subject:"Hesap bildirimi",body:"Hesabınızla ilgili yeni bir bilgilendirme.",date:"Dün",account:"Outlook"},
+{id:3,from:"İş ve Yaşam",subject:"Haftalık bülten",body:"Bu haftanın yeni haberleri ve duyuruları.",date:"Dün",account:"Gmail"},
+{id:4,from:"Arkadaşın",subject:"Fotoğraflar",body:"Geçen gün çektiğimiz fotoğraflar burada.",date:"Pazartesi",account:"Outlook"}
+];
+let secim="Tümü";
+function goster(){
+let alan=document.getElementById("liste");
+alan.innerHTML="";
+mailler.filter(m=>secim==="Tümü"||m.account===secim).forEach(m=>{
+let div=document.createElement("div");
+div.className="mail";
+div.innerHTML=`<strong>${m.from}</strong><p>${m.subject}</p><small>${m.body}<br>${m.account} · ${m.date}</small>
+<div class="actions">
+<button onclick="arsiv(${m.id})">Arşivle</button>
+<button class="del" onclick="sil(${m.id})">Sil</button>
+</div>`;
+let baslangic=0;
+div.addEventListener("touchstart",e=>baslangic=e.changedTouches[0].clientX,{passive:true});
+div.addEventListener("touchend",e=>{
+let fark=e.changedTouches[0].clientX-baslangic;
+if(fark>75)arsiv(m.id);
+if(fark< -75)sil(m.id);
+},{passive:true});
+alan.appendChild(div);
+});
+if(!alan.children.length)alan.innerHTML="<p style='padding:20px;color:#aaa'>Gelen kutusu boş.</p>";
 }
+function sekme(btn,ad){
+secim=ad;
+document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+goster();
+}
+function arsiv(id){
+mailler=mailler.filter(m=>m.id!==id);
+mesaj("E-posta arşivlendi");
+goster();
+}
+function sil(id){
+mailler=mailler.filter(m=>m.id!==id);
+mesaj("E-posta silindi");
+goster();
+}
+function mesaj(yazi){
+document.getElementById("notice").textContent=yazi;
+}
+goster();
 </script>
 </body>
 </html>
+
