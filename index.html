@@ -9,11 +9,16 @@
 *{box-sizing:border-box}
 body{margin:0;background:#10141d;color:white;font-family:Arial}
 header{padding:22px;background:#191f2b;font-size:23px;font-weight:bold}
-.tabs{display:flex;background:#191f2b}
-.tabs button{flex:1;padding:17px;border:0;background:none;color:#aaa;font-size:16px}
-.tabs button.active{color:#58a6ff;border-bottom:3px solid #58a6ff}
+.accounts,.folders{display:flex;background:#191f2b}
+button{cursor:pointer}
+.accounts button,.folders button{
+flex:1;padding:15px 5px;border:0;background:none;color:#aaa;font-size:14px
+}
+.accounts button.active,.folders button.active{
+color:#58a6ff;border-bottom:3px solid #58a6ff
+}
 .top{padding:18px;font-size:19px;font-weight:bold}
-#notice{text-align:center;color:#65c9a5;padding:12px}
+#notice{text-align:center;color:#65c9a5;padding:12px;font-size:13px}
 .mail-wrap{position:relative;margin:10px;border-radius:13px;overflow:hidden}
 .indicator{position:absolute;top:0;bottom:0;width:100%;display:flex;align-items:center;font-weight:bold;padding:20px;opacity:0}
 .left{left:0;justify-content:flex-start;background:#a63e49}
@@ -22,36 +27,90 @@ header{padding:22px;background:#191f2b;font-size:23px;font-weight:bold}
 .mail strong{font-size:16px}
 .mail p{color:#c0c8d5;margin:9px 0}
 .mail small{color:#8c9aaf}
-.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:12px}
-.actions button{border:0;border-radius:8px;padding:8px 12px;color:white;background:#34445b}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:13px;flex-wrap:wrap}
+.actions button{border:0;border-radius:8px;padding:9px 12px;color:white;background:#34445b}
 .actions .del{background:#a63e49}
+.actions .restore{background:#287d69}
+.empty{text-align:center;color:#8995a8;padding:35px}
 </style>
 </head>
 <body>
+
 <header>✉ Birleşik Posta</header>
-<div class="tabs">
-<button class="active" onclick="sekme(this,'Tümü')">Tümü</button>
-<button onclick="sekme(this,'Gmail')">Gmail</button>
-<button onclick="sekme(this,'Outlook')">Outlook</button>
+
+<div class="accounts">
+<button class="active" onclick="hesapSec(this,'Tümü')">Tümü</button>
+<button onclick="hesapSec(this,'Gmail')">Gmail</button>
+<button onclick="hesapSec(this,'Outlook')">Outlook</button>
 </div>
-<div class="top">Gelen Kutusu</div>
+
+<div class="folders">
+<button class="active" onclick="klasorSec(this,'gelen')">Gelen</button>
+<button onclick="klasorSec(this,'arsiv')">Arşiv</button>
+<button onclick="klasorSec(this,'cop')">Çöp Kutusu</button>
+</div>
+
+<div class="top" id="baslik">Gelen Kutusu</div>
 <div id="notice">Sağa kaydır: ARŞİV · Sola kaydır: SİL</div>
 <div id="liste"></div>
+
 <script>
 let mailler=[
-{id:1,from:"Ahmet Yılmaz",subject:"Merhaba",body:"Nasılsın? Görüşmeyeli uzun zaman oldu.",date:"Bugün",account:"Gmail"},
-{id:2,from:"Microsoft",subject:"Hesap bildirimi",body:"Hesabınızla ilgili yeni bir bilgilendirme.",date:"Dün",account:"Outlook"},
-{id:3,from:"İş ve Yaşam",subject:"Haftalık bülten",body:"Bu haftanın yeni haberleri ve duyuruları.",date:"Dün",account:"Gmail"},
-{id:4,from:"Arkadaşın",subject:"Fotoğraflar",body:"Geçen gün çektiğimiz fotoğraflar burada.",date:"Pazartesi",account:"Outlook"}
+{id:1,from:"Ahmet Yılmaz",subject:"Merhaba",body:"Nasılsın? Görüşmeyeli uzun zaman oldu.",date:"Bugün",account:"Gmail",folder:"gelen"},
+{id:2,from:"Microsoft",subject:"Hesap bildirimi",body:"Hesabınızla ilgili yeni bir bilgilendirme.",date:"Dün",account:"Outlook",folder:"gelen"},
+{id:3,from:"İş ve Yaşam",subject:"Haftalık bülten",body:"Bu haftanın yeni haberleri ve duyuruları.",date:"Dün",account:"Gmail",folder:"gelen"},
+{id:4,from:"Arkadaşın",subject:"Fotoğraflar",body:"Geçen gün çektiğimiz fotoğraflar burada.",date:"Pazartesi",account:"Outlook",folder:"gelen"}
 ];
+
 let secim="Tümü";
+let klasor="gelen";
+
+function kaydet(){
+try{
+localStorage.setItem("birlesikPosta",JSON.stringify(mailler));
+}catch(e){}
+}
+
+function yukle(){
+try{
+let veri=localStorage.getItem("birlesikPosta");
+if(veri)mailler=JSON.parse(veri);
+}catch(e){}
+}
 
 function goster(){
 let alan=document.getElementById("liste");
 alan.innerHTML="";
-mailler.filter(m=>secim==="Tümü"||m.account===secim).forEach(m=>{
+
+let basliklar={
+gelen:"Gelen Kutusu",
+arsiv:"Arşiv",
+cop:"Çöp Kutusu"
+};
+
+document.getElementById("baslik").textContent=basliklar[klasor];
+
+let gorunen=mailler.filter(m=>
+m.folder===klasor &&
+(secim==="Tümü"||m.account===secim)
+);
+
+gorunen.forEach(m=>{
 let wrap=document.createElement("div");
 wrap.className="mail-wrap";
+
+let butonlar="";
+
+if(klasor==="gelen"){
+butonlar=`
+<button onclick="arsiv(${m.id})">Arşivle</button>
+<button class="del" onclick="sil(${m.id})">Sil</button>`;
+}else{
+butonlar=`
+<button class="restore" onclick="geriAl(${m.id})">Gelen Kutusuna Al</button>
+<button class="del" onclick="kaliciSil(${m.id})">Kalıcı Sil</button>`;
+}
+
 wrap.innerHTML=`
 <div class="indicator left">🗑 SİL</div>
 <div class="indicator right">▣ ARŞİVLE</div>
@@ -59,11 +118,9 @@ wrap.innerHTML=`
 <strong>${m.from}</strong>
 <p>${m.subject}</p>
 <small>${m.body}<br>${m.account} · ${m.date}</small>
-<div class="actions">
-<button onclick="arsiv(${m.id})">Arşivle</button>
-<button class="del" onclick="sil(${m.id})">Sil</button>
-</div>
+<div class="actions">${butonlar}</div>
 </div>`;
+
 let kart=wrap.querySelector(".mail");
 let sol=wrap.querySelector(".left");
 let sag=wrap.querySelector(".right");
@@ -83,8 +140,14 @@ sag.style.opacity=fark>0?Math.min(1,fark/75):0;
 
 kart.addEventListener("touchend",e=>{
 let fark=e.changedTouches[0].clientX-baslangic;
-if(fark>85){arsiv(m.id);return}
-if(fark< -85){sil(m.id);return}
+if(fark>85 && klasor==="gelen"){
+arsiv(m.id);
+return;
+}
+if(fark< -85 && klasor==="gelen"){
+sil(m.id);
+return;
+}
 kart.style.transform="translateX(0)";
 sol.style.opacity=0;
 sag.style.opacity=0;
@@ -92,25 +155,54 @@ sag.style.opacity=0;
 
 alan.appendChild(wrap);
 });
-if(!alan.children.length)alan.innerHTML="<p style='padding:20px;color:#aaa'>Gelen kutusu boş.</p>";
+
+if(!gorunen.length){
+alan.innerHTML="<div class='empty'>Bu klasör boş.</div>";
+}
 }
 
-function sekme(btn,ad){
+function hesapSec(btn,ad){
 secim=ad;
-document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+document.querySelectorAll(".accounts button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+goster();
+}
+
+function klasorSec(btn,ad){
+klasor=ad;
+document.querySelectorAll(".folders button").forEach(b=>b.classList.remove("active"));
 btn.classList.add("active");
 goster();
 }
 
 function arsiv(id){
-mailler=mailler.filter(m=>m.id!==id);
-mesaj("E-posta arşivlendi");
+let m=mailler.find(x=>x.id===id);
+if(m)m.folder="arsiv";
+kaydet();
+mesaj("Posta arşivlendi");
 goster();
 }
 
 function sil(id){
-mailler=mailler.filter(m=>m.id!==id);
-mesaj("E-posta silindi");
+let m=mailler.find(x=>x.id===id);
+if(m)m.folder="cop";
+kaydet();
+mesaj("Posta çöp kutusuna taşındı");
+goster();
+}
+
+function geriAl(id){
+let m=mailler.find(x=>x.id===id);
+if(m)m.folder="gelen";
+kaydet();
+mesaj("Posta geri alındı");
+goster();
+}
+
+function kaliciSil(id){
+mailler=mailler.filter(x=>x.id!==id);
+kaydet();
+mesaj("Posta kalıcı olarak silindi");
 goster();
 }
 
@@ -118,9 +210,8 @@ function mesaj(yazi){
 document.getElementById("notice").textContent=yazi;
 }
 
+yukle();
 goster();
 </script>
 </body>
 </html>
-
-
